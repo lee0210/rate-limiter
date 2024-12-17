@@ -40,7 +40,7 @@ def test_rate_limiter_blocks_requests(rate_limiter):
     """
     identifier = "test_user_2"
     capacity = 3
-    leak_rate = 1  # 1 request per second
+    leak_rate = 1/60  # 1 request per minute
 
     # Simulate 3 allowed requests
     for _ in range(3):
@@ -62,7 +62,6 @@ def test_rate_limiter_leak_rate(rate_limiter):
         assert not rate_limiter.is_rate_limited(identifier, capacity, leak_rate), "Request should be allowed"
 
     # Wait for the bucket to leak
-    import time
     time.sleep(2)
 
     # Request should be allowed again

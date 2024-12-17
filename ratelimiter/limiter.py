@@ -2,7 +2,6 @@ import redis
 import time
 from redis.exceptions import AuthenticationError
 
-
 class LeakyBucketRateLimiter:
     def __init__(self, redis_host, redis_port, redis_user, redis_password, ssl=True):
         """
@@ -47,17 +46,10 @@ class LeakyBucketRateLimiter:
         leaked = elapsed_time * leak_rate
         current_size = max(0, current_size - leaked)
 
-        # Update last checked time and set the TTL
-        self.redis_client.hset(key, mapping={"last_checked": current_time, "size": current_size})
-
-        # Set TTL to auto-clear the record
-        ttl = int(current_size / leak_rate)
-        self.redis_client.expire(key, ttl)
-
         # Check if the bucket can accommodate the new request
-        if current_size < capacity:
+        if current_size + 1 <= capacity:
             # Accept the request and increase the bucket size
-            self.redis_client.hincrbyfloat(key, "size", 1)
+            self.redis_client.hset(key, mapping={"last_checked": current_time, "size": current_size + 1})
             # Update TTL after increment
             ttl = int((current_size + 1) / leak_rate)
             self.redis_client.expire(key, ttl)
